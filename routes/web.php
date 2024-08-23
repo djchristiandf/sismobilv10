@@ -64,8 +64,8 @@ Route::get('/users/usuariosacesso/login/{login}', [UserController::class, 'getBy
 Route::get('/users/servidores/login/{login}', [UserController::class, 'getByLoginVwServidores'])
     ->name('users.getByLoginVwServidores');
 
-Route::get('/users/servidores', [UserController::class, 'getAllFromServidores'])->name('users.getAllFromServidores');
-Route::get('/users/usuariosacesso', [UserController::class, 'getAllFromUsuariosAcesso'])->name('users.getAllFromUsuariosAcesso');
+Route::get('/users/servidores/servidores', [UserController::class, 'getAllFromServidores'])->name('users.getAllFromServidores');
+Route::get('/users/servidores/usuariosacesso', [UserController::class, 'getAllFromUsuariosAcesso'])->name('users.getAllFromUsuariosAcesso');
 
 
 //valetransporte combustivel

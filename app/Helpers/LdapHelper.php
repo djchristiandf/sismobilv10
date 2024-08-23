@@ -7,7 +7,7 @@ class LdapHelper
 {
     public static function callLdapMicroservice($username, $password)
     {
-        $url = 'http://10.233.208.3:8000/api/v1/autenticaldap';
+        $url = 'http://localhost:8002/api/v1/autenticaldap';
         $data = [
             "username" => $username,
             "password" => $password

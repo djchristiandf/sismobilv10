@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Servidor extends Model
+    class Servidor extends Model
 {
     protected $connection = 'usuarios'; // Substitua 'usuarios' pela conexão desejada
     protected $table = 'vw_servidores'; // Define a view como a tabela do modelo
