@@ -399,8 +399,8 @@ class ValeTransporteCombustivelController extends Controller
             }
 
             // Comando para conectar ao compartilhamento de rede com usuário e senha
-            $username = 'christian.admin'; // Substitua pelo nome de usuário
-            $password = 'Pullover30';   // Substitua pela senha
+            $username = env('REMOTE_USERNAME'); // Substitua pelo nome de usuário
+            $password = env('REMOTE_PASSWORD');   // Substitua pela senha
             $netUseCommand = "net use \\\\10.233.208.200\\temp /user:$username $password";
 
             // Executa o comando net use e loga o resultado
@@ -427,10 +427,11 @@ class ValeTransporteCombustivelController extends Controller
             Log::info("Executando procedimento: {$procedure} com mesAno: {$mesAno}");
             $result = DB::connection('gestaorh')->select("EXEC valetransp.$procedure ?", [$mesAno]);
             Log::info("Resultado da execução da stored procedure: ", (array)$result);
+            Log::info('Stored Procedure Result:', $result);
 
             // Verifica se o resultado não é nulo e se contém ao menos um item
-            if (!empty($result) && isset($result[0]) && isset($result[0]->Mensagem)) {
-                $mensagem = $result[0]->Mensagem;
+            if (!empty($result) && isset($result[0]) && isset($result[0]->stdClass) && isset($result[0]->stdClass->Mensagem)) {
+                $mensagem = $result[0]->stdClass->Mensagem;
 
                 if (preg_match('/(\d+) REGISTROS INSERIDOS/', $mensagem, $matches)) {
                     $registrosInseridos = intval($matches[1]);
