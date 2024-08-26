@@ -430,27 +430,27 @@ class ValeTransporteCombustivelController extends Controller
             Log::info('Stored Procedure Result:', $result);
 
             // Verifica se o resultado não é nulo e se contém ao menos um item
-            if (!empty($result) && isset($result[0]) && isset($result[0]->stdClass) && isset($result[0]->stdClass->Mensagem)) {
-                $mensagem = $result[0]->stdClass->Mensagem;
+            if (!empty($result) && isset($result[0]->Mensagem)) {
+                $mensagem = $result[0]->Mensagem;
 
                 if (preg_match('/(\d+) REGISTROS INSERIDOS/', $mensagem, $matches)) {
                     $registrosInseridos = intval($matches[1]);
 
                     if ($registrosInseridos == 0) {
-                        return redirect()->back()->with('swal_error', 'Nenhum registro foi inserido. Verifique o arquivo e tente novamente.');
+                        return response()->json(['status' => 'warning', 'message' => "Para esse período $mesAno, todos os registros foram importados. "]);
                     } else {
-                        return redirect()->back()->with('swal_success', "Arquivo processado com sucesso! $registrosInseridos registros inseridos.");
+                        return response()->json(['status' => 'success', 'message' => "Arquivo processado com sucesso! $registrosInseridos registros inseridos."]);
                     }
                 } else {
                     Log::error("Formato de mensagem inesperado: {$mensagem}");
-                    return redirect()->back()->with('swal_error', 'Erro ao processar o arquivo. Verifique o retorno da stored procedure.');
+                    return response()->json(['status' => 'error', 'message' => 'Erro ao processar o arquivo. Verifique o retorno da stored procedure.']);
                 }
             } else {
                 Log::error("Nenhum registro retornado ou propriedade 'Mensagem' não encontrada.");
-                return redirect()->back()->with('swal_error', 'Erro ao processar o arquivo. Verifique o retorno da stored procedure.');
+                return response()->json(['status' => 'error', 'message' => 'Erro ao processar o arquivo. Verifique o retorno da stored procedure.']);
             }
         } else {
-            return redirect()->back()->with('error', 'Falha no upload do arquivo. Tente novamente.');
+            return response()->json(['status' => 'error', 'message' => 'Falha no upload do arquivo. Tente novamente.']);
         }
     }
 }

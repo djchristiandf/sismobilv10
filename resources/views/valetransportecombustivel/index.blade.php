@@ -220,31 +220,6 @@
                                 </div>
                             @endif
 
-                            <!-- Inclusão do SweetAlert2 para exibir as mensagens -->
-                            @if (session('swal_success'))
-                            <script>
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Sucesso!',
-                                    text: '{{ session('swal_success') }}',
-                                    background: '#d4edda',
-                                    iconHtml: '<i class="bi bi-check-circle-fill"></i>'
-                                });
-                            </script>
-                            @endif
-
-                            @if (session('swal_error'))
-                            <script>
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Erro!',
-                                    text: '{{ session('swal_error') }}',
-                                    background: '#f8d7da',
-                                    iconHtml: '<i class="bi bi-x-circle-fill"></i>'
-                                });
-                            </script>
-                            @endif
-
                             <div class="row">
                                 <!-- Importar Arquivo Transporte -->
                                 <div class="col-lg-6 col-md-6 col-sm-12">
@@ -254,14 +229,17 @@
                                                 <h4>Importar Planilha TRANSPORTE <i class="bi bi-credit-card-2-front"></i></h4>
                                                 <p>Importe um arquivo Excel com os dados de transporte.</p>
 
-                                                <form id="formTransporte" action="{{ route('importar.arquivo') }}" method="post" enctype="multipart/form-data">
+                                                <form id="formTransporte" method="post" enctype="multipart/form-data">
                                                     @csrf
                                                     <input type="hidden" name="tipo" value="1"> <!-- 1 para transporte -->
-                                                    <input type="text" name="periodo" value="{{ $mesAno }}" class="form-control">
+                                                    <input type="hidden" name="periodo" value="{{ $mesAno }}" class="form-control">
                                                     <div>
                                                         <label for="formFileTransporte" class="form-label">Escolha o excel</label>
-                                                        <input class="form-control form-control-lg" id="formFileTransporte" type="file" name="arquivo" accept=".xls, .xlsx" required>
-                                                        <label id="fileLabelTransporte" for="formFileTransporte" class="btn btn-outline-success btn-xl"><i class="bi bi-file-earmark-excel"></i></label>
+                                                        <input class="form-control form-control-lg" id="formFileTransporte" type="file" name="arquivo"
+                                                            accept=".xls, .xlsx" required>
+                                                        <label id="fileLabelTransporte" for="formFileTransporte" class="btn btn-outline-success btn-xl">
+                                                            <i class="bi bi-file-earmark-excel"></i> <span id="fileNameTransporte">Clique aqui para selecionar</span>
+                                                        </label>
                                                         <div id="spinnerTransporte" class="spinner-border text-primary d-none" role="status">
                                                             <span class="visually-hidden">Loading...</span>
                                                         </div>
@@ -287,8 +265,11 @@
                                                     <input type="hidden" name="periodo" value="{{ $mesAno }}" class="form-control">
                                                     <div>
                                                         <label for="formFileCombustivel" class="form-label">Escolha o excel</label>
-                                                        <input class="form-control form-control-lg" id="formFileCombustivel" type="file" name="arquivo" accept=".xls, .xlsx" required>
-                                                        <label id="fileLabelCombustivel" for="formFileCombustivel" class="btn btn-outline-success btn-xl"><i class="bi bi-file-earmark-excel"></i></label>
+                                                        <input class="form-control form-control-lg" id="formFileCombustivel" type="file" name="arquivo"
+                                                            accept=".xls, .xlsx" required>
+                                                        <label id="fileLabelCombustivel" for="formFileCombustivel" class="btn btn-outline-success btn-xl">
+                                                            <i class="bi bi-file-earmark-excel"></i> <span id="fileNameCombustivel">Clique aqui para selecionar</span>
+                                                        </label>
                                                         <div id="spinnerCombustivel" class="spinner-border text-primary d-none" role="status">
                                                             <span class="visually-hidden">Loading...</span>
                                                         </div>
@@ -734,38 +715,118 @@
     </script>
 
     <script>
-        document.getElementById('formFileTransporte').addEventListener('change', function() {
-            var fileName = this.files[0] ? this.files[0].name : 'Clique aqui para escolher';
-            var spinner = document.getElementById('spinnerTransporte');
-            var label = document.getElementById('fileLabelTransporte');
+        document.getElementById('formFileTransporte').addEventListener('change', function (event) {
+            var fileName = event.target.files[0] ? event.target.files[0].name : 'Clique aqui para selecionar';
+            document.getElementById('fileNameTransporte').textContent = fileName;
+        });
 
-            // Mostrar o spinner
+        document.getElementById('formTransporte').addEventListener('submit', function (event) {
+            event.preventDefault(); // Impede o envio padrão do formulário
+
+            var form = new FormData(this); // Cria um objeto FormData com os dados do formulário
+            var spinner = document.getElementById('spinnerTransporte');
+
+            // Exibir spinner
             spinner.classList.remove('d-none');
 
-            // Simular o tempo de carregamento
-            setTimeout(function() {
-                // Esconder o spinner
+            // Envio do formulário via AJAX
+            fetch('{{ route("importar.arquivo") }}', {
+                method: 'POST',
+                body: form,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                spinner.classList.add('d-none'); // Esconder o spinner
+
+                if (data.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso!',
+                        text: data.message,
+                        background: '#d4edda',
+                        iconHtml: '<i class="bi bi-check-circle-fill"></i>'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro!',
+                        text: data.message,
+                        background: '#f8d7da',
+                        iconHtml: '<i class="bi bi-x-circle-fill"></i>'
+                    });
+                }
+            })
+            .catch(error => {
                 spinner.classList.add('d-none');
-                // Atualizar o label
-                label.textContent = fileName;
-            }, 2000); // Ajuste o tempo conforme necessário
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro!',
+                    text: 'Ocorreu um erro inesperado. Tente novamente.',
+                    background: '#f8d7da',
+                    iconHtml: '<i class="bi bi-x-circle-fill"></i>'
+                });
+                console.error('Erro:', error);
+            });
         });
 
         document.getElementById('formFileCombustivel').addEventListener('change', function() {
-            var fileName = this.files[0] ? this.files[0].name : 'Clique aqui para escolher';
-            var spinner = document.getElementById('spinnerCombustivel');
-            var label = document.getElementById('fileLabelCombustivel');
+            var fileName = event.target.files[0] ? event.target.files[0].name : 'Clique aqui para selecionar';
+            document.getElementById('fileNameCombustivel').textContent = fileName;
+        });
 
-            // Mostrar o spinner
+        document.getElementById('formCombustivel').addEventListener('submit', function (event) {
+            event.preventDefault(); // Impede o envio padrão do formulário
+
+            var form = new FormData(this); // Cria um objeto FormData com os dados do formulário
+            var spinner = document.getElementById('spinnerCombustivel');
+
+            // Exibir spinner
             spinner.classList.remove('d-none');
 
-            // Simular o tempo de carregamento
-            setTimeout(function() {
-                // Esconder o spinner
+            // Envio do formulário via AJAX
+            fetch('{{ route("importar.arquivo") }}', {
+                method: 'POST',
+                body: form,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                spinner.classList.add('d-none'); // Esconder o spinner
+
+                if (data.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso!',
+                        text: data.message,
+                        background: '#d4edda',
+                        iconHtml: '<i class="bi bi-check-circle-fill"></i>'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'ATENÇÃO!',
+                        text: data.message,
+                        background: '#E4A11B',
+                        iconHtml: '<i class="bi bi-x-circle-fill"></i>'
+                    });
+                }
+            })
+            .catch(error => {
                 spinner.classList.add('d-none');
-                // Atualizar o label
-                label.textContent = fileName;
-            }, 2000); // Ajuste o tempo conforme necessário
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro!',
+                    text: 'Ocorreu um erro inesperado. Tente novamente.',
+                    background: '#f8d7da',
+                    iconHtml: '<i class="bi bi-x-circle-fill"></i>'
+                });
+                console.error('Erro:', error);
+            });
         });
 
         // Mostrar o Spinner durante o Submit
