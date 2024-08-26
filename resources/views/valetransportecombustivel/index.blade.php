@@ -226,7 +226,7 @@
                                     <div class="card card-warning card-outline h-100">
                                         <div class="card-body d-flex flex-column justify-content-between">
                                             <div>
-                                                <h4>Importar Planilha TRANSPORTE <i class="bi bi-credit-card-2-front"></i></h4>
+                                                <h4>Importar Planilha TRANSPORTE <i class="bi bi-bus-front"></i></h4>
                                                 <p>Importe um arquivo Excel com os dados de transporte.</p>
 
                                                 <form id="formTransporte" method="post" enctype="multipart/form-data">
@@ -286,7 +286,7 @@
                                     <div class="card card-success card-outline h-100">
                                         <div class="card-body d-flex flex-column justify-content-between">
                                             <div>
-                                                <h4>Exportar Planilha TRANSPORTE <i class="bi bi-credit-card-2-front"></i></h4>
+                                                <h4>Exportar Planilha TRANSPORTE <i class="bi bi-bus-front"></i></h4>
                                                 <p>Exporte os dados de transporte em formato XML.</p>
                                             </div>
                                             <!-- Adicione um ID ao botão para vincular ao evento de clique no JavaScript -->
@@ -751,11 +751,11 @@
                     });
                 } else {
                     Swal.fire({
-                        icon: 'error',
-                        title: 'Erro!',
+                        icon: 'warning',
+                        title: 'ATENÇÃO!',
                         text: data.message,
-                        background: '#f8d7da',
-                        iconHtml: '<i class="bi bi-x-circle-fill"></i>'
+                        background: '#E4A11B',
+                        iconHtml: '<i class="bi bi-exclamation-circle-fill"></i>'
                     });
                 }
             })
