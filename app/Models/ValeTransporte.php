@@ -9,6 +9,9 @@ class ValeTransporte extends Model
 {
     use HasFactory;
 
+    // Define a conexão que essa model deve utilizar
+    protected $connection = 'gestaorh';
+
     protected $table = 'valetransp.valetransporte';
 
     protected $fillable = [
@@ -22,6 +25,9 @@ class ValeTransporte extends Model
         'InclusaoManual',
         'Tipo'
     ];
+
+    // Desabilita os timestamps automáticos
+    public $timestamps = false;
 
     protected $casts = [
         'LiberaConsulta' => 'boolean',

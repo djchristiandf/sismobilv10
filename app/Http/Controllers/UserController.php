@@ -32,17 +32,17 @@ class UserController extends Controller
 
         Log::info('Resposta da autenticação', ['response' => $response]);
 
-        if ($response['status_code'] == 200) {
+        if($response['status_code'] == 200) {
             $user_info = json_decode($response['response'], true);
 
-            if (isset($user_info['user_info']) && isset($user_info['systems_access'])) {
+            if(isset($user_info['user_info']) && isset($user_info['systems_access'])) {
                 $systems_access = $user_info['systems_access'];
                 $hasAccess = false;
                 $roleText = null;
                 $redirectUrl = null;
 
-                foreach ($systems_access as $system) {
-                    if (strpos($system['Sistema'], 'SISMOBILIDADE') !== false) {
+                foreach($systems_access as $system) {
+                    if(strpos($system['Sistema'], 'SISMOBILIDADE') !== false) {
                         $role = $system['Sistema'];
 
                         if (strpos($role, 'ADMINISTRADOR') !== false) {
@@ -67,12 +67,12 @@ class UserController extends Controller
                     }
                 }
 
-                if ($hasAccess) {
+                if($hasAccess) {
                     // Configurar a sessão
                     $userRecord = DB::connection('usuarios')->table('Usuarios')->where('Login', $user_info['user_info']['username'])->first();
 
                     // Se o usuário não existir, adicione-o ao banco
-                    if (!$userRecord) {
+                    if(!$userRecord) {
                         $newUser = [
                             'email' => $user_info['user_info']['email'],
                             'name' => $user_info['user_info']['displayName'],
@@ -278,5 +278,5 @@ class UserController extends Controller
     {
         $users = UsuarioAcesso::all();
         return view('usuariosacesso.index', compact('users'));
-    }
+    } 
 }

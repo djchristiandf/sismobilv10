@@ -76,7 +76,17 @@ $(document).ready(function () {
 
         $('#add-ValorTotal').val('');
 
-        $('#add-Tipo').val('Combustível'); // Default option
+        // Define the type display
+        const tipo = $('#add-TipoHidden').val();
+        $('#tipoDisplay').text(tipo === 'C' ? 'Combustível' : 'Transporte');
+
+        // Set required attribute for add-Cartao based on tipo
+        const cartaoInput = $('#add-Cartao');
+        if (tipo === 'T') {
+            cartaoInput.attr('required', true);
+        } else {
+            cartaoInput.removeAttr('required');
+        }
 
     });
 
@@ -104,10 +114,19 @@ $('.delete-btn').on('click', function () {
 
 // Evento de clique no botão de confirmação de exclusão
 $('#confirmDelete').on('click', function () {
+    event.preventDefault(); // Prevent default form submission
+    //console.log(registroId);
+
+    // Mostrar spinner
+    $('#loadingSpinner').removeClass('d-none');
+
     $.ajax({
         url: `/valetransportecombustivel/${registroId}`,
         method: 'DELETE',
+        data: $('#deleteForm').serialize(), // Serialize form data
         success: function (response) {
+            // Ocultar spinner
+            $('#loadingSpinner').addClass('d-none');
             Swal.fire({
                 title: 'Sucesso!',
                 text: response.message || 'Registro excluído com sucesso!',
@@ -118,6 +137,8 @@ $('#confirmDelete').on('click', function () {
             });
         },
         error: function (xhr) {
+            // Ocultar spinner
+            $('#loadingSpinner').addClass('d-none');
             Swal.fire({
                 title: 'Erro!',
                 text: xhr.responseJSON.message || 'Erro ao excluir o registro.',

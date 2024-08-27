@@ -20,16 +20,27 @@ class ValeTransporteCombustivelController extends Controller
      */
     public function index()
     {
+        $tipoNome = 'COMBUSTÍVEL-TRANSPORTE';
 
-        $tipoNome = 'COMBUSTÍVEL ou TRANSPORTE';
-        $mesAno = '';
-        //dd($mesAno)/
+        // Obtém o valor de mesAno a partir da consulta
+        $mesAnoResult = DB::connection('gestaorh')->select('SELECT valetransp.maisrecente() AS resultado');
+
+        // Verifica se o resultado não está vazio e obtém o valor
+        $mesAno = !empty($mesAnoResult) ? $mesAnoResult[0]->resultado : null;
+
+        // Se $mesAno não for nulo, separa o mês e o ano
+        if ($mesAno) {
+            list($ano, $mes) = explode('-', $mesAno);
+        } else {
+            $mes = 0;
+            $ano = 0;
+        }
+
         // Busca os registros no banco de dados pelo campo MesAno, limitado a 100 resultados
         $registros = ValeTransporteCombustivel::where('MesAno', $mesAno)->take(1)->get();
+
         // Chama o método getTodasLinhas() para obter todas as linhas
         $linhas = $this->getTodasLinhas();
-        $mes = 0;
-        $ano = 0;
         $tipo = null;
 
         // Retorna a view com os registros encontrados
@@ -133,9 +144,11 @@ class ValeTransporteCombustivelController extends Controller
         // Recebe os parâmetros mes e ano da requisição
         //$mes = $request->input('mes');
         //$ano = $request->input('ano');
+        // Garantindo que o mês tenha sempre dois dígitos
+        $mes = str_pad($mes, 2, '0', STR_PAD_LEFT);
 
-        // Concatena o mes e ano no formato esperado (MM/YYYY)
-        $mesAno = $mes . '/' . $ano;
+        // Concatena o mes e ano no formato esperado (YYYY-MM)
+        $mesAno = $mes . '/' . $ano; // Corrigido para YYYY-MM
 
         // Verifica o valor de $tipo e converte para a palavra correspondente
         if ($tipo === 'C') {
@@ -149,6 +162,7 @@ class ValeTransporteCombustivelController extends Controller
         // Busca os registros no banco de dados pelo campo MesAno, limitado a 100 resultados
         $registros = ValeTransporteCombustivel::where('MesAno', $mesAno)->where('Tipo', $tipo)->get();
 
+        $mesAno = $ano . '-' . $mes; // Corrigido para YYYY-MM
         // Chama o método getTodasLinhas() para obter todas as linhas
         $linhas = $this->getTodasLinhas();
 
@@ -208,43 +222,63 @@ class ValeTransporteCombustivelController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'id' => 'required|integer|exists:valetransportecombustivel,Id',
-            'CpfM' => 'nullable|string',
-            'Cartao' => 'nullable|string',
-            'Linha' => 'nullable|string',
-            'LinhaDescricao' => 'nullable|string',
+            'EmpregadoId' => 'required|integer',
+            'Linha' => 'required|integer',
             'Valor' => 'nullable|numeric',
-            'Quantidade' => 'nullable|numeric',
-            'QuantidadeExtra' => 'nullable|numeric',
-            'LiberaConsulta' => 'nullable|string',
-            'ValorTotal' => 'nullable|numeric',
-            'InclusaoManual' => 'nullable|string',
+            'Cartao' => 'nullable|numeric',
+            'Quantidade' => 'required|integer',
+            'QuantidadeExtra' => 'nullable|integer',
+            'Data' => 'required|date',
             'Tipo' => 'nullable|string',
-            'Fechada' => 'nullable|string',
         ]);
 
-        try {
-            $registro = ValeTransporteCombustivel::findOrFail($request->input('id'));
-            $registro->update($request->only([
-                'CpfM',
-                'Cartao',
-                'Linha',
-                'LinhaDescricao',
-                'Valor',
-                'Quantidade',
-                'QuantidadeExtra',
-                'LiberaConsulta',
-                'ValorTotal',
-                'InclusaoManual',
-                'Tipo',
-                'Fechada'
-            ]));
+        // Verifique se 'QuantidadeExtra' não está preenchido e defina como 0
+        if (empty($validatedData['QuantidadeExtra'])) {
+            $validatedData['QuantidadeExtra'] = 0;
+        }
 
-            return redirect()->back()->with('success', 'Registro atualizado com sucesso!');
+        // Mapear 'Linha' para 'LinhaId'
+        $validatedData['LinhaId'] = $validatedData['Linha'];
+        unset($validatedData['Linha']); // Remover o campo 'Linha' do array
+
+        // Obter o mês e o ano da data
+        $data = \Carbon\Carbon::parse($validatedData['Data']);
+        $mesAno = $data->format('Y-m'); // Formato YYYY-MM
+
+        // Verificar se o registro já existe
+        $registroExistente = ValeTransporte::where('EmpregadoId', $validatedData['EmpregadoId'])
+            ->whereYear('Data', $data->year)
+            ->whereMonth('Data', $data->month)
+            ->first();
+
+        if ($registroExistente) {
+            return redirect()->back()->withErrors(['error' => 'Registro já existe para este empregado no '.$mesAno.' especificado.']);
+        }
+
+        try {
+            // Start a transaction
+            DB::connection('gestaorh')->beginTransaction();
+
+            // Create a new record in ValeTransporte
+            $registro = ValeTransporte::create($validatedData);
+
+            // Execute the update on the servidores table
+            DB::connection('gestaorh')->table('servidores')
+                ->where('id', $validatedData['EmpregadoId'])
+                ->update(['valetransportecartao' => $validatedData['Cartao']]);
+
+            // Commit the transaction
+            DB::connection('gestaorh')->commit();
+
+            return redirect()->back()->with('success', 'Beneficiário adicionado com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->withErrors(['error' => 'Erro ao atualizar o registro.']);
+            // Rollback the transaction if something goes wrong
+            DB::connection('gestaorh')->rollBack();
+
+            return redirect()->back()->withErrors(['error' => 'Erro ao adicionar o registro: ' . $e->getMessage()]);
         }
     }
+
 
     public function show($id)
     {
@@ -264,10 +298,18 @@ class ValeTransporteCombustivelController extends Controller
     public function destroy(string $id)
     {
         try {
-            $registro = ValeTransporte::findOrFail($id);
-            $registro->delete();
+            // Log para indicar que a exclusão será realizada diretamente no banco de dados
+            Log::info("Tentando excluir o registro com ID: {$id} usando a conexão gestaorh");
+
+            // Executa o DELETE diretamente no banco de dados
+            DB::connection('gestaorh')->table('valetransp.valetransporte')->where('id', $id)->delete();
+
+            Log::info("Registro com ID: {$id} excluído com sucesso.");
+
             return response()->json(['message' => 'Registro excluído com sucesso!']);
         } catch (\Exception $e) {
+            Log::error("Erro ao excluir o registro: " . $e->getMessage());
+
             return response()->json(['message' => 'Erro ao excluir o registro.'], 500);
         }
     }
@@ -288,13 +330,13 @@ class ValeTransporteCombustivelController extends Controller
         $registros = DB::connection('gestaorh')->select('SELECT Nome, CPF, Cartao, Valor, MesAno FROM valetransp.dadosxml WHERE MesAno = ? ORDER BY Nome', [$mesAno]);
 
         // Verifica se há registros sem o valor de Cartao
-        $incompleteRecords = collect($registros)->filter(function($vl) {
+        $incompleteRecords = collect($registros)->filter(function ($vl) {
             return empty($vl->Cartao);
         });
 
         // Se existirem registros incompletos, retorna uma mensagem de erro
         if ($incompleteRecords->isNotEmpty()) {
-            $errors = $incompleteRecords->map(function($vl) {
+            $errors = $incompleteRecords->map(function ($vl) {
                 return "Nome: {$vl->Nome}, CPF: {$vl->CPF}";
             })->implode(', ');
 

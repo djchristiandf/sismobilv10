@@ -59,23 +59,13 @@
                     aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                {{-- <div class="collapse navbar-collapse" id="navbarCollapse">
+                <div class="collapse navbar-collapse" id="navbarCollapse">
                     <ul class="navbar-nav me-auto mb-2 mb-md-0">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="#">INÍCIO</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">EXPORTAR</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">IMPORTAR</a>
-                    </li>
+                        <li class="nav-item">
+                            <a class="btn btn-secondary" aria-current="page" href="#">SAIR <i class="bi bi-door-closed"></i></a>
+                        </li>
                     </ul>
-                    <form class="d-flex">
-                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                    <button class="btn btn-outline-success" type="submit">procurar</button>
-                    </form>
-                </div> --}}
+                </div>
             </div>
         </nav>
     </header>
@@ -88,7 +78,7 @@
                     <!-- Formulário de Pesquisa -->
                     <div class="card border-primary mb-4">
                         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Pesquisar Por Período e Tipo ({{ $tipoNome }} {{ $mesAno }})</h5>
+                            <h5 class="mb-0">Pesquisar Por Período e Tipo</h5>
                             <button type="button" class="btn-close btn-close-white" aria-label="Fechar"
                                 onclick="this.closest('.card').style.display='none';"></button>
                         </div>
@@ -97,7 +87,7 @@
                                 <div class="row mb-3">
                                     <div class="col-md-4">
                                         <label for="mesAno" class="form-label">Selecione Mês e Ano</label>
-                                        <input type="month" id="mesAno" class="form-control" name="mesANo" value="{{ sprintf('%04d-%02d', $ano, $mes) }}" required autofocus>
+                                        <input type="month" id="mesAno" class="form-control" name="mesAno" value="{{ sprintf('%04d-%02d', $ano, $mes) }}" required autofocus>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Tipo</label>
@@ -110,11 +100,7 @@
                                             <label class="form-check-label" for="transporte">TRANSPORTE</label>
                                         </div>
                                     </div>
-                                    <div class="col-md-4 align-self-end">
-                                        <button type="submit" class="btn btn-outline-primary" title="Buscar Vale">
-                                            <i class="bi bi-search"></i> Buscar Período Tipo <i class="bi bi-card-list"></i>
-                                        </button>
-                                    </div>
+
                                 </div>
                             </form>
                             <!-- Fim Formulário de Pesquisa -->
@@ -137,16 +123,21 @@
             </div>
 
             @if($registros->isEmpty())
-                <p>Nenhum registro foi encontrado no periodo {{ $mesAno }} , importe a planilha abaixo.</p>
-                <button id="openServicos" class="btn btn-outline-success btn-lg" onclick="mostrarServicos()">
-                    <i class="bi bi-folder2-open"></i> ABRIR
-                </button>
+                <p>0 REGISTRO(S) PARA SEREM TRABALHADOS.</p>
             @else
                 <div id="conteudo" class="alert alert-secondary alert-dismissible fade show" role="alert">
-                    <h4 class="alert-heading">Painel Listagem de Registros (<span style="font-size: 18px;color:gray;">Obs.:Quando finalizar a gestão de usuários, clique no X ao lado para continuar.</span>)</h4>
+                    <?php
+                        echo '<h4 class="alert-heading">Painel Listagem de Registros ' . $tipoNome . ' ' .
+                            ($tipo === 'C' ? '<i class="bi bi-fuel-pump"></i>' : '<i class="bi bi-bus-front"></i>') .
+                            ' ' . htmlspecialchars($mes.'/'.$ano) . '</h4>';
+                    ?>
+                    <output>(<span style="font-size: 18px;color:gray;">Obs.:Quando finalizar a gestão de beneficários, clique no X ao lado para continuar.</span>)</output>
+                    <hr>
+                    <!-- Botão para abrir a modal -->
                     <button type="button" class="btn btn-outline-primary" id="btnCreate"
                         data-bs-toggle="modal" data-bs-target="#addModal" title="Cadastrar Registro">
-                        <i class="bi bi-floppy2"></i> Adicionar Novo Registro <i class="bi bi-fuel-pump"></i>&nbsp;<i class="bi bi-credit-card-2-front"></i>
+                        <i class="bi bi-floppy2"></i> Adicionar Beneficiário
+                            <?php echo ($tipo === 'C' ? '<i class="bi bi-fuel-pump"></i>' : '<i class="bi bi-bus-front"></i>')?>
                     </button>
                     <div id="spinner">
                         <div class="lds-ripple">Processando...<div></div><div></div></div>
@@ -195,18 +186,18 @@
                     </table>
                     <button id="closetab1" type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-
             @endif
         </div>
     </main>
 
+    @if($tipo !== null)
     <div class="container">
         <div class="row">
             <div class="col-md-12">
                 <div id="servicos" class="alert alert-secondary alert-dismissible fade show" role="alert">
                     <div class="card">
                         <div class="card-header">
-                            <h4 class="alert-heading">Painel de Serviços {{ $mesAno }}</h4>
+                            <h4 class="alert-heading">Painel de Serviços {{ $mes."/".$ano }}</h4>
                         </div>
                         <div class="card-body">
 
@@ -221,98 +212,117 @@
                             @endif
 
                             <div class="row">
-                                <!-- Importar Arquivo Transporte -->
-                                <div class="col-lg-6 col-md-6 col-sm-12">
-                                    <div class="card card-warning card-outline h-100">
-                                        <div class="card-body d-flex flex-column justify-content-between">
-                                            <div>
-                                                <h4>Importar Planilha TRANSPORTE <i class="bi bi-bus-front"></i></h4>
-                                                <p>Importe um arquivo Excel com os dados de transporte.</p>
+                                @if ($registros->isEmpty() && $tipo === 'T')
+                                    <!-- Importar Arquivo Transporte -->
+                                    <div class="col-lg-6 col-md-6 col-sm-12" id="divImpTransp">
+                                        <div class="card card-warning card-outline h-100">
+                                            <div class="card-body d-flex flex-column justify-content-between">
+                                                <div>
+                                                    <h4>Importar Planilha TRANSPORTE <i class="bi bi-bus-front"></i></h4>
+                                                    <p>Importe um arquivo Excel com os dados de transporte.</p>
 
-                                                <form id="formTransporte" method="post" enctype="multipart/form-data">
-                                                    @csrf
-                                                    <input type="hidden" name="tipo" value="1"> <!-- 1 para transporte -->
-                                                    <input type="hidden" name="periodo" value="{{ $mesAno }}" class="form-control">
-                                                    <div>
-                                                        <label for="formFileTransporte" class="form-label">Escolha o excel</label>
-                                                        <input class="form-control form-control-lg" id="formFileTransporte" type="file" name="arquivo"
-                                                            accept=".xls, .xlsx" required>
-                                                        <label id="fileLabelTransporte" for="formFileTransporte" class="btn btn-outline-success btn-xl">
-                                                            <i class="bi bi-file-earmark-excel"></i> <span id="fileNameTransporte">Clique aqui para selecionar</span>
-                                                        </label>
-                                                        <div id="spinnerTransporte" class="spinner-border text-primary d-none" role="status">
-                                                            <span class="visually-hidden">Loading...</span>
+                                                    <form id="formTransporte" method="post" enctype="multipart/form-data">
+                                                        @csrf
+                                                        <input type="hidden" name="tipo" value="1"> <!-- 1 para transporte -->
+                                                        <input type="hidden" name="periodo" value="{{ $mesAno }}" class="form-control">
+                                                        <div>
+                                                            <label for="formFileTransporte" class="form-label">Escolha o excel</label>
+                                                            <input class="form-control form-control-lg" id="formFileTransporte" type="file" name="arquivo"
+                                                                accept=".xls, .xlsx" required>
+                                                            <label id="fileLabelTransporte" for="formFileTransporte" class="btn btn-outline-success btn-xl">
+                                                                <i class="bi bi-file-earmark-excel"></i> <span id="fileNameTransporte">Clique aqui para selecionar</span>
+                                                            </label>
+                                                            <div id="spinnerTransporte" class="spinner-border text-primary d-none" role="status">
+                                                                <span class="visually-hidden">Loading...</span>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <button type="submit" name="submitTransporte" class="btn btn-warning btn-block w-100 mt-3">IMPORTAR&nbsp;<i class="bi bi-cloud-arrow-up"></i></button>
-                                                </form>
+                                                        <button type="submit" name="submitTransporte" class="btn btn-warning btn-block w-100 mt-3">IMPORTAR&nbsp;<i class="bi bi-cloud-arrow-up"></i></button>
+                                                    </form>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                @endif
+                                @if ($registros->isEmpty() && $tipo === 'C')
+                                    <!-- Importar Arquivo Combustível -->
+                                    <div class="col-lg-6 col-md-6 col-sm-12" id="divImpComb">
+                                        <div class="card card-warning card-outline h-100">
+                                            <div class="card-body d-flex flex-column justify-content-between">
+                                                <div>
+                                                    <h4>Importar Planilha COMBUSTÍVEL <i class="bi bi-fuel-pump"></i></h4>
+                                                    <p>Importe um arquivo Excel com os dados de combustível.</p>
 
-                                <!-- Importar Arquivo Combustível -->
-                                <div class="col-lg-6 col-md-6 col-sm-12">
-                                    <div class="card card-warning card-outline h-100">
-                                        <div class="card-body d-flex flex-column justify-content-between">
-                                            <div>
-                                                <h4>Importar Planilha COMBUSTÍVEL <i class="bi bi-fuel-pump"></i></h4>
-                                                <p>Importe um arquivo Excel com os dados de combustível.</p>
-
-                                                <form id="formCombustivel" action="{{ route('importar.arquivo') }}" method="post" enctype="multipart/form-data">
-                                                    @csrf
-                                                    <input type="hidden" name="tipo" value="2"> <!-- 2 para combustível -->
-                                                    <input type="hidden" name="periodo" value="{{ $mesAno }}" class="form-control">
-                                                    <div>
-                                                        <label for="formFileCombustivel" class="form-label">Escolha o excel</label>
-                                                        <input class="form-control form-control-lg" id="formFileCombustivel" type="file" name="arquivo"
-                                                            accept=".xls, .xlsx" required>
-                                                        <label id="fileLabelCombustivel" for="formFileCombustivel" class="btn btn-outline-success btn-xl">
-                                                            <i class="bi bi-file-earmark-excel"></i> <span id="fileNameCombustivel">Clique aqui para selecionar</span>
-                                                        </label>
-                                                        <div id="spinnerCombustivel" class="spinner-border text-primary d-none" role="status">
-                                                            <span class="visually-hidden">Loading...</span>
+                                                    <form id="formCombustivel" action="{{ route('importar.arquivo') }}" method="post" enctype="multipart/form-data">
+                                                        @csrf
+                                                        <input type="hidden" name="tipo" value="2"> <!-- 2 para combustível -->
+                                                        <input type="hidden" name="periodo" value="{{ $mesAno }}" class="form-control">
+                                                        <div>
+                                                            <label for="formFileCombustivel" class="form-label">Escolha o excel</label>
+                                                            <input class="form-control form-control-lg" id="formFileCombustivel" type="file" name="arquivo"
+                                                                accept=".xls, .xlsx" required>
+                                                            <label id="fileLabelCombustivel" for="formFileCombustivel" class="btn btn-outline-success btn-xl">
+                                                                <i class="bi bi-file-earmark-excel"></i> <span id="fileNameCombustivel">Clique aqui para selecionar</span>
+                                                            </label>
+                                                            <div id="spinnerCombustivel" class="spinner-border text-primary d-none" role="status">
+                                                                <span class="visually-hidden">Loading...</span>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <button type="submit" name="submit" class="btn btn-warning btn-block w-100 mt-3">IMPORTAR&nbsp;<i class="bi bi-cloud-arrow-up"></i></button>
-                                                </form>
+                                                        <button type="submit" name="submit" class="btn btn-warning btn-block w-100 mt-3">IMPORTAR&nbsp;<i class="bi bi-cloud-arrow-up"></i></button>
+                                                    </form>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                @endif
+                                @if (!$registros->isEmpty() && $tipo === 'T')
+                                    <!-- Card 3 - Exportar transporte (xml) -->
+                                    <div class="col-lg-6 col-md-6 col-sm-12" id="divExpTransp">
+                                        <div class="card card-success card-outline h-100">
+                                            <div class="card-body d-flex flex-column justify-content-between">
+                                                <div>
+                                                    <h4>Exportar Planilha TRANSPORTE <i class="bi bi-bus-front"></i></h4>
+                                                    <p>Exporte os dados de transporte em formato XML.</p>
+                                                </div>
+                                                <!-- Adicione um ID ao botão para vincular ao evento de clique no JavaScript -->
+                                                <a href="javascript:void(0);" id="exportXml" class="btn btn-success mt-3">EXPORTAR&nbsp;<i class="bi bi-cloud-arrow-down"></i></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
 
-                                <!-- Card 3 - Exportar transporte (xml) -->
-                                <div class="col-lg-6 col-md-6 col-sm-12">
-                                    <div class="card card-success card-outline h-100">
-                                        <div class="card-body d-flex flex-column justify-content-between">
-                                            <div>
-                                                <h4>Exportar Planilha TRANSPORTE <i class="bi bi-bus-front"></i></h4>
-                                                <p>Exporte os dados de transporte em formato XML.</p>
+                                @if (!$registros->isEmpty() && $tipo === 'C')
+                                    <!-- Card 4 - Exportar combustivel (excel) -->
+                                    <div class="col-lg-6 col-md-6 col-sm-12" id="divExpComb">
+                                        <div class="card card-success card-outline h-100">
+                                            <div class="card-body d-flex flex-column justify-content-between">
+                                                <div>
+                                                    <h4>Exportar Planilha COMBUSTÍVEL <i class="bi bi-fuel-pump"></i></h4>
+                                                    <p>Exporte os dados de combustível em formato Excel.</p>
+                                                </div>
+                                                <a href="{{ route('exportar.combustivel', ['mesAno' => $mesAno]) }}"
+                                                    class="btn btn-success mt-3">EXPORTAR&nbsp;<i class="bi bi-cloud-arrow-down"></i></a>
                                             </div>
-                                            <!-- Adicione um ID ao botão para vincular ao evento de clique no JavaScript -->
-                                            <a href="javascript:void(0);" id="exportXml" class="btn btn-success mt-3">EXPORTAR&nbsp;<i class="bi bi-cloud-arrow-down"></i></a>
                                         </div>
                                     </div>
-                                </div>
-
-                                <!-- Card 4 - Exportar combustivel (excel) -->
-                                <div class="col-lg-6 col-md-6 col-sm-12">
-                                    <div class="card card-success card-outline h-100">
-                                        <div class="card-body d-flex flex-column justify-content-between">
-                                            <div>
-                                                <h4>Exportar Planilha COMBUSTÍVEL <i class="bi bi-fuel-pump"></i></h4>
-                                                <p>Exporte os dados de combustível em formato Excel.</p>
-                                            </div>
-                                            <a href="{{ route('exportar.combustivel', ['mesAno' => $mesAno]) }}" class="btn btn-success mt-3">EXPORTAR&nbsp;<i class="bi bi-cloud-arrow-down"></i></a>
-                                        </div>
-                                    </div>
-                                </div>
+                                @endif
                             </div><!-- /.row -->
                         </div><!-- /.card-body -->
                     </div><!-- /.card -->
                     <button id="closetab2" type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             </div>
+        </div>
+    </div>
+    @endif
+    <div id="loadingSpinner" class="d-none" style="
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 5rem; height: 5rem;
+        transform: translate(-50%, -50%);
+        z-index: 1050;">
+        <div class="spinner-grow text-danger" role="status">
+            <span class="visually-hidden">Loading...</span>
         </div>
     </div>
 
@@ -339,6 +349,11 @@
                     </div>
                     <form id="addForm" action="{{ route('valetransportecombustivel.store') }}" method="POST">
                         @csrf
+                        <input type="hidden" name="EmpregadoId" id="add-ServidorId">
+                        <input type="hidden" name="Data" id="add-Data"
+                            value="{{ $mesAno ? \Carbon\Carbon::createFromFormat('Y-m', $mesAno)->startOfMonth()->format('Y-m-d') : '' }}">
+                        <input type="hidden" name="Tipo" id="add-TipoHidden" value="{{ $tipo }}">
+
                         <div class="row mb-3">
                             <div class="col-3">
                                 <label for="add-Matricula">Procurar dados pela Matrícula</label>
@@ -357,15 +372,19 @@
                         <hr>
                         <div class="row mb-2">
                             <div class="col">
-                                <label for="add-Tipo">Tipo</label>
-                                <select class="form-control" id="add-Tipo" name="Tipo" required>
-                                    <option value="Combustível">Combustível</option>
-                                    <option value="Transporte">Transporte</option>
-                                </select>
+                                <label>Tipo</label>
+                                <input type="hidden" id="add-TipoHidden" value="{{ $tipo }}">
+                                <span id="tipoDisplay" class="badge
+                                    {{ $tipo === 'C' ? 'bg-success' : 'bg-warning' }}
+                                    text-white" style="font-size: 1.1em; padding: 0.5em 1em;">
+                                    {{ $tipo === 'C' ? 'Combustível' : 'Transporte' }}
+                                </span>
                             </div>
                             <div class="col">
                                 <label for="add-Cartao">Cartão</label>
-                                <input type="number" class="form-control" id="add-Cartao" name="Cartao">
+                                <input type="text" class="form-control" id="add-Cartao" name="Cartao"
+                                    size="10" maxlength="10" pattern="\d{10}" title="Digite exatamente 10 dígitos"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                             </div>
                         </div>
                         <div class="row mb-1">
@@ -388,7 +407,7 @@
                             </div>
                             <div class="col-2">
                                 <label for="add-QuantidadeExtra">Extra</label>
-                                <input type="number" class="form-control" id="add-QuantidadeExtra" name="QuantidadeExtra" required>
+                                <input type="number" class="form-control" id="add-QuantidadeExtra" name="QuantidadeExtra">
                             </div>
                             <div class="col-2">
                                 <label for="add-Valor">Valor</label>
@@ -491,7 +510,9 @@
                         <b><span style="color: red;" id="mesAnoDelete"></span></b>?
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" id="confirmDelete">Excluir</button>
+                    <form id="deleteForm" method="POST">
+                        @csrf @method('DELETE') <button type="button" class="btn btn-danger" id="confirmDelete">Excluir</button>
+                    </form>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-square"></i> Cancelar</button>
                 </div>
             </div>
@@ -617,11 +638,13 @@
                     url: `/valetransportecombustivel/servidor/${matricula}`,
                     method: 'GET',
                     success: function(data) {
+                        console.log(data);
                         // Supondo que o retorno seja um objeto JSON com os dados
                         $('#add-Nome').val(data.Nome);
                         $('#add-CpfM').val(data.Cpf);
                         $('#add-Cartao').val(data.Cartao);
                         $('#add-Matricula').val(data.Matricula);
+                        $('#add-ServidorId').val(data.ServidorId);
                     },
                     error: function(xhr) {
                         // Usando SweetAlert2 para exibir a mensagem de erro
@@ -640,40 +663,14 @@
             }
         }
 
-        function buscarPorLinha(linha) {
-            const spinner = document.getElementById("spinner-add");
-            if (linha) {
-                spinner.style.display = "block";
-
-                $.ajax({
-                    url: `/valetransportecombustivel/linha/${linha}`,
-                    method: 'GET',
-                    success: function(data) {
-                        $('#add-Linha').val(data.Codigo);
-                        $('#add-LinhaDescricao').val(data.Descricao);
-                        $('#add-Valor').val(data.Valor);
-                        $('#add-ValorTotal').val((parseFloat(data.Valor) * parseFloat($('#add-Quantidade').val())).toFixed(2));
-                    },
-                    error: function(xhr) {
-                        Swal.fire({
-                            title: 'Erro!',
-                            text: xhr.responseJSON.message || 'Erro ao buscar linha.',
-                            icon: 'error',
-                            confirmButtonText: 'Fechar'
-                        });
-                    },
-                    complete: function() {
-                        spinner.style.display = "none";
-                    }
-                });
-            }
-        }
-
         $(document).ready(function() {
-            $('#searchForm').on('submit', function(event) {
+            // Listener para mudança nos inputs de tipo
+            $('input[name="tipo"]').on('change', function(event) {
+                // Mostrar spinner
+                $('#loadingSpinner').removeClass('d-none');
                 event.preventDefault(); // Previne o envio padrão do formulário
 
-                var mesAno = $('#mesAno').val();
+                var mesAno = $('#mesAno').val(); // Supondo que você tenha um input com id="mesAno"
                 var tipo = $('input[name="tipo"]:checked').val();
 
                 if (mesAno && tipo) {
@@ -689,153 +686,180 @@
                         icon: 'error',
                         confirmButtonText: 'Fechar'
                     });
-
                 }
             });
-        });
-    </script>
 
-    <!-- Script JavaScript para mostrar o div "servicos" -->
-    <script>
-        document.getElementById('closetab1').addEventListener('click', function() {
-            document.getElementById('servicos').style.display = 'block'; // Mostra o div "servicos"
-        });
-        document.getElementById('closetab2').addEventListener('click', function() {
-            console.log("abriu");
-            location.reload();
-        });
-    </script>
+            $('input[name="mesAno"]').on('change', function(event) {
+                // Mostrar spinner
+                $('#loadingSpinner').removeClass('d-none');
+                event.preventDefault(); // Previne o envio padrão do formulário
 
-    <script>
-        function mostrarServicos() {
-            document.getElementById('servicos').style.display = 'block'; // Mostra o div "servicos"
-            document.getElementById('containerPrincipal').style.display = 'none'; // Mostra o div "servicos"containerPrincipal
-            console.log("Serviços abertos"); // Para verificar se a função foi chamada
-        }
-    </script>
+                var mesAno = $('#mesAno').val(); // Supondo que você tenha um input com id="mesAno"
+                var tipo = $('input[name="tipo"]:checked').val();
 
-    <script>
-        document.getElementById('formFileTransporte').addEventListener('change', function (event) {
-            var fileName = event.target.files[0] ? event.target.files[0].name : 'Clique aqui para selecionar';
-            document.getElementById('fileNameTransporte').textContent = fileName;
-        });
+                if (mesAno && tipo) {
+                    var [ano, mes] = mesAno.split('-'); // Divide o valor do input month em ano e mês
+                    var url = `/valetransportecombustivel/${mes}/${ano}/${tipo}`;
 
-        document.getElementById('formTransporte').addEventListener('submit', function (event) {
-            event.preventDefault(); // Impede o envio padrão do formulário
-
-            var form = new FormData(this); // Cria um objeto FormData com os dados do formulário
-            var spinner = document.getElementById('spinnerTransporte');
-
-            // Exibir spinner
-            spinner.classList.remove('d-none');
-
-            // Envio do formulário via AJAX
-            fetch('{{ route("importar.arquivo") }}', {
-                method: 'POST',
-                body: form,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                spinner.classList.add('d-none'); // Esconder o spinner
-
-                if (data.status === 'success') {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Sucesso!',
-                        text: data.message,
-                        background: '#d4edda',
-                        iconHtml: '<i class="bi bi-check-circle-fill"></i>'
-                    });
+                    // Redireciona para a rota correta
+                    window.location.href = url;
                 } else {
                     Swal.fire({
-                        icon: 'warning',
-                        title: 'ATENÇÃO!',
-                        text: data.message,
-                        background: '#E4A11B',
-                        iconHtml: '<i class="bi bi-exclamation-circle-fill"></i>'
+                        title: 'Erro!',
+                        text: 'Por favor, selecione o mês/ano e o tipo.',
+                        icon: 'error',
+                        confirmButtonText: 'Fechar'
                     });
                 }
-            })
-            .catch(error => {
-                spinner.classList.add('d-none');
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erro!',
-                    text: 'Ocorreu um erro inesperado. Tente novamente.',
-                    background: '#f8d7da',
-                    iconHtml: '<i class="bi bi-x-circle-fill"></i>'
+            });
+
+            // Mostrar o div "servicos"
+            document.getElementById('closetab1').addEventListener('click', function() {
+                document.getElementById('servicos').style.display = 'block'; // Mostra o div "servicos"
+            });
+
+            document.getElementById('closetab2').addEventListener('click', function() {
+                location.reload();
+            });
+        });
+
+    </script>
+
+
+    <script>
+        $(document).ready(function() {
+            console.log("DOM ready");
+            var formFileCombustivel = document.getElementById('formFileCombustivel');
+            if (formFileCombustivel) {
+                formFileCombustivel.addEventListener('change', function(event) {
+                    var fileName = event.target.files[0] ? event.target.files[0].name : 'Clique aqui para selecionar';
+                    document.getElementById('fileNameCombustivel').textContent = fileName;
                 });
-                console.error('Erro:', error);
-            });
-        });
+            }else {
+                console.log("Elemento #formFileCombustivel não encontrado");
+            }
+            var formFileTransporte = document.getElementById('formFileTransporte');
+            if (formFileTransporte) {
+                formFileTransporte.addEventListener('change', function (event) {
+                    var fileName = event.target.files[0] ? event.target.files[0].name : 'Clique aqui para selecionar';
+                    document.getElementById('fileNameTransporte').textContent = fileName;
+                });
+            }else {
+                    console.log("Elemento #formFileTransporte não encontrado");
+            }
 
-        document.getElementById('formFileCombustivel').addEventListener('change', function() {
-            var fileName = event.target.files[0] ? event.target.files[0].name : 'Clique aqui para selecionar';
-            document.getElementById('fileNameCombustivel').textContent = fileName;
-        });
+            document.getElementById('formTransporte').addEventListener('submit', function (event) {
+                event.preventDefault(); // Impede o envio padrão do formulário
 
-        document.getElementById('formCombustivel').addEventListener('submit', function (event) {
-            event.preventDefault(); // Impede o envio padrão do formulário
+                var form = new FormData(this); // Cria um objeto FormData com os dados do formulário
+                var spinner = document.getElementById('spinnerTransporte');
 
-            var form = new FormData(this); // Cria um objeto FormData com os dados do formulário
-            var spinner = document.getElementById('spinnerCombustivel');
+                // Exibir spinner
+                spinner.classList.remove('d-none');
 
-            // Exibir spinner
-            spinner.classList.remove('d-none');
+                // Envio do formulário via AJAX
+                fetch('{{ route("importar.arquivo") }}', {
+                    method: 'POST',
+                    body: form,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    spinner.classList.add('d-none'); // Esconder o spinner
 
-            // Envio do formulário via AJAX
-            fetch('{{ route("importar.arquivo") }}', {
-                method: 'POST',
-                body: form,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                spinner.classList.add('d-none'); // Esconder o spinner
-
-                if (data.status === 'success') {
+                    if (data.status === 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Sucesso!',
+                            text: data.message,
+                            background: '#d4edda',
+                            iconHtml: '<i class="bi bi-check-circle-fill"></i>'
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'ATENÇÃO!',
+                            text: data.message,
+                            background: '#E4A11B',
+                            iconHtml: '<i class="bi bi-exclamation-circle-fill"></i>'
+                        });
+                    }
+                })
+                .catch(error => {
+                    spinner.classList.add('d-none');
                     Swal.fire({
-                        icon: 'success',
-                        title: 'Sucesso!',
-                        text: data.message,
-                        background: '#d4edda',
-                        iconHtml: '<i class="bi bi-check-circle-fill"></i>'
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'ATENÇÃO!',
-                        text: data.message,
-                        background: '#E4A11B',
+                        icon: 'error',
+                        title: 'Erro!',
+                        text: 'Ocorreu um erro inesperado. Tente novamente.',
+                        background: '#f8d7da',
                         iconHtml: '<i class="bi bi-x-circle-fill"></i>'
                     });
-                }
-            })
-            .catch(error => {
-                spinner.classList.add('d-none');
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erro!',
-                    text: 'Ocorreu um erro inesperado. Tente novamente.',
-                    background: '#f8d7da',
-                    iconHtml: '<i class="bi bi-x-circle-fill"></i>'
+                    console.error('Erro:', error);
                 });
-                console.error('Erro:', error);
             });
-        });
 
-        // Mostrar o Spinner durante o Submit
-        document.getElementById('formTransporte').addEventListener('submit', function () {
-            document.getElementById('spinnerTransporte').classList.remove('d-none');
-        });
+            document.getElementById('formCombustivel').addEventListener('submit', function (event) {
+                event.preventDefault(); // Impede o envio padrão do formulário
 
-        document.getElementById('formCombustivel').addEventListener('submit', function () {
-            document.getElementById('spinnerCombustivel').classList.remove('d-none');
+                var form = new FormData(this); // Cria um objeto FormData com os dados do formulário
+                var spinner = document.getElementById('spinnerCombustivel');
+
+                // Exibir spinner
+                spinner.classList.remove('d-none');
+
+                // Envio do formulário via AJAX
+                fetch('{{ route("importar.arquivo") }}', {
+                    method: 'POST',
+                    body: form,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    spinner.classList.add('d-none'); // Esconder o spinner
+
+                    if (data.status === 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Sucesso!',
+                            text: data.message,
+                            background: '#d4edda',
+                            iconHtml: '<i class="bi bi-check-circle-fill"></i>'
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'ATENÇÃO!',
+                            text: data.message,
+                            background: '#E4A11B',
+                            iconHtml: '<i class="bi bi-x-circle-fill"></i>'
+                        });
+                    }
+                })
+                .catch(error => {
+                    spinner.classList.add('d-none');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro!',
+                        text: 'Ocorreu um erro inesperado. Tente novamente.',
+                        background: '#f8d7da',
+                        iconHtml: '<i class="bi bi-x-circle-fill"></i>'
+                    });
+                    console.error('Erro:', error);
+                });
+            });
+
+            // Mostrar o Spinner durante o Submit
+            document.getElementById('formTransporte').addEventListener('submit', function () {
+                document.getElementById('spinnerTransporte').classList.remove('d-none');
+            });
+
+            document.getElementById('formCombustivel').addEventListener('submit', function () {
+                document.getElementById('spinnerCombustivel').classList.remove('d-none');
+            });
         });
     </script>
 
