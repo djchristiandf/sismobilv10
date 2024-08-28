@@ -46,6 +46,7 @@ $(document).ready(function () {
             $('#edit-QuantidadeExtra').val(registro.QuantidadeExtra);
             $('#edit-LiberaConsulta').val(registro.LiberaConsulta);
             $('#edit-ValorTotal').val(registro.ValorTotal);
+            $('#edit-EmpregadoId').val(registro.EmpregadoId);
 
             // Preenche o select de LinhasDisponiveis
             var selectLinhas = $('#edit-Linha');

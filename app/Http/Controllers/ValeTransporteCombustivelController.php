@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use RealRashid\SweetAlert\Facades\Alert;
+use Illuminate\Support\Facades\Session;
 
 class ValeTransporteCombustivelController extends Controller
 {
@@ -20,6 +21,7 @@ class ValeTransporteCombustivelController extends Controller
      */
     public function index()
     {
+        $userName = Session::get('name');
         $tipoNome = 'COMBUSTÍVEL-TRANSPORTE';
 
         // Obtém o valor de mesAno a partir da consulta
@@ -175,18 +177,18 @@ class ValeTransporteCombustivelController extends Controller
         // Validação dos dados recebidos
         $validatedData = $request->validate([
             'id' => 'required',
+            'EmpregadoId' => 'required',
             'Cartao' => 'nullable|numeric',
             'LinhaId' => 'required', // Verifica se é um inteiro
-            'Valor' => 'nullable|numeric',
             'Quantidade' => 'nullable|integer',
             'QuantidadeExtra' => 'nullable|integer',
         ]);
 
         // Cast manual dos inputs para garantir que sejam inteiros
         $id = (int) $validatedData['id'];
+        $empregadoId = (int) $validatedData['EmpregadoId'];
         $linhaId = (int) $validatedData['LinhaId'];
         $cartao = $validatedData['Cartao']; // Pode ser numérico ou null
-        $valor = $validatedData['Valor']; // Pode ser numérico ou null
         $quantidade = isset($validatedData['Quantidade']) ? (int) $validatedData['Quantidade'] : null; // Garantido como inteiro ou null
         $quantidadeExtra = isset($validatedData['QuantidadeExtra']) ? (int) $validatedData['QuantidadeExtra'] : null; // Garantido como inteiro ou null
 
@@ -194,28 +196,22 @@ class ValeTransporteCombustivelController extends Controller
             // Monta o array de atualização
             $updateData = [
                 'LinhaId' => $linhaId,
-                'Valor' => $valor,
                 'Quantidade' => $quantidade,
                 'QuantidadeExtra' => $quantidadeExtra,
             ];
 
-            // Adiciona 'Cartao' apenas se não for nulo
-            if ($cartao !== null) {
-                $updateData['Cartao'] = $cartao;
-            }
-
             // Atualiza o registro usando DB
-            DB::table('valetransporte')->where('Id', $id)->update($updateData);
+            DB::connection('gestaorh')->table('valetransp.valetransporte')->where('Id', $id)->update($updateData);
 
             // Se Cartao não é nulo, executa a procedure
             if ($cartao !== null) {
-                DB::statement('EXEC valetransp.atualizanumerocartao ?, ?', [$id, $cartao]);
+                DB::connection('gestaorh')->statement('EXEC valetransp.atualizanumerocartao ?, ?', [$empregadoId, $cartao]);
             }
 
             return redirect()->back()->with('success', 'Registro atualizado com sucesso!');
         } catch (\Exception $e) {
             // Retorna erro em caso de falha
-            return redirect()->back()->withErrors(['error' => 'Erro ao atualizar o registro.']);
+            return redirect()->back()->withErrors(['error' => 'Erro ao atualizar o registro: '.$e]);
         }
     }
 

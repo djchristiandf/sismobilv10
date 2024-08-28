@@ -65,6 +65,13 @@
                             <a class="btn btn-secondary" aria-current="page" href="#">SAIR <i class="bi bi-door-closed"></i></a>
                         </li>
                     </ul>
+                    <ul class="navbar-nav ms-auto mb-2 mb-md-0">
+                        <li class="nav-item">
+                            <span class="navbar-text">
+                                {{ session('name') }}
+                            </span>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </nav>
@@ -314,6 +321,7 @@
         </div>
     </div>
     @endif
+
     <div id="loadingSpinner" class="d-none" style="
         position: fixed;
         top: 50%;
@@ -331,7 +339,6 @@
             <center><span class="text-muted text-center">NOVACAP {{ date('Y') }} - (Desenvolvido pela DEINF)</span></center>
         </div>
     </footer>
-
 
 
     <!-- Modal for adding a new record -->
@@ -421,13 +428,12 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" form="addForm" class="btn btn-primary"><i class="bi bi-floppy2"></i> Salvar Registro</button>
+                    <button type="submit" form="addForm" class="btn btn-primary" id="submitAdd"><i class="bi bi-floppy2"></i> Salvar Registro</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-square"></i> Cancelar</button>
                 </div>
             </div>
         </div>
     </div>
-
 
     <!-- Modal for editing -->
     <div class="modal fade" id="editModal" tabindex="-1" role="dialog"
@@ -441,13 +447,16 @@
                 <div class="modal-body">
                     <form id="editForm" action="{{ route('valetransportecombustivel.update') }}" method="POST">
                         @csrf
-                        @method('POST')
+                        @method('PUT')
                         <input type="hidden" id="edit-id" name="id">
-
+                        <input type="hidden" id="edit-EmpregadoId" name="EmpregadoId">
                         <div class="row mb-3">
                             <div class="col">
                                 <label for="edit-Cartao">Cartão</label>
-                                <input type="number" class="form-control" id="edit-Cartao" name="Cartao">
+
+                                <input type="text" class="form-control" id="edit-Cartao" name="Cartao"
+                                size="10" maxlength="10" pattern="\d{10}" title="Digite exatamente 10 dígitos"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                             </div>
                             <div class="col">
                                 <label for="edit-CpfM">CPF</label>
@@ -489,7 +498,7 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" form="editForm" class="btn btn-success"><i class="bi bi-floppy2"></i> Salvar alterações</button>
+                    <button type="submit" form="editForm" class="btn btn-success" id="submitEdit"><i class="bi bi-floppy2"></i> Salvar alterações</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-square"></i> Cancelar</button>
                 </div>
             </div>
@@ -722,9 +731,43 @@
                 location.reload();
             });
         });
-
     </script>
 
+    <script>
+        // Função para verificar e atualizar a exibição do div 'servicos'
+        function updateServicosDisplay() {
+            const tipoInputs = document.querySelectorAll('input[name="tipo"]');
+            let tipoSelecionado = null;
+
+            tipoInputs.forEach(input => {
+                if (input.checked) {
+                    tipoSelecionado = input.value;
+                }
+            });
+
+            const servicosDiv = document.getElementById('servicos');
+            const conteudoDiv = document.getElementById('conteudo');
+
+            if (tipoSelecionado !== null) {
+                // Se o valor do tipo não for nulo, mostrar o div
+                servicosDiv.style.display = 'block';
+            } else {
+                // Se não houver valor, ocultar o div
+                servicosDiv.style.display = 'none';
+            }
+        }
+
+        // Verifica o valor ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            updateServicosDisplay();
+        });
+
+        // Adiciona evento de mudança nos inputs de tipo
+        const tipoInputs = document.querySelectorAll('input[name="tipo"]');
+        tipoInputs.forEach(input => {
+            input.addEventListener('change', updateServicosDisplay);
+        });
+    </script>
 
     <script>
         $(document).ready(function() {
@@ -893,6 +936,25 @@
                         confirmButtonText: 'Fechar'
                     });
                 }
+            });
+        });
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            document.getElementById('editForm').addEventListener('submit', function() {
+                // Exibir o spinner
+                document.getElementById('loadingSpinner').style.display = 'block';
+
+                // Opcional: desabilitar o botão de submit para evitar múltiplos cliques
+                document.getElementById('submitEdit').disabled = true;
+            });
+            document.getElementById('addForm').addEventListener('submit', function() {
+                // Exibir o spinner
+                document.getElementById('loadingSpinner').style.display = 'block';
+
+                // Opcional: desabilitar o botão de submit para evitar múltiplos cliques
+                document.getElementById('submitAdd').disabled = true;
             });
         });
     </script>

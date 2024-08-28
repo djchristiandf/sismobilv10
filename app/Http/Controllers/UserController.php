@@ -10,6 +10,7 @@ use App\Models\Servidor;
 use App\Models\UsuarioAcesso;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 
 class UserController extends Controller
 {
@@ -86,7 +87,7 @@ class UserController extends Controller
                     }
 
                     // Configurar a sessão com os dados do usuário
-                    session([
+                    Session::put([
                         'userId' => $user_id,
                         'role' => $role,
                         'roleText' => $roleText,
@@ -278,5 +279,5 @@ class UserController extends Controller
     {
         $users = UsuarioAcesso::all();
         return view('usuariosacesso.index', compact('users'));
-    } 
+    }
 }

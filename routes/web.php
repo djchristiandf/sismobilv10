@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ValeTransporteCombustivelController;
@@ -84,6 +85,13 @@ Route::get('/download-xml/{filename}', function ($filename) {
     return response()->download($path);
 })->name('download.xml');
 
+Route::get('/login', function() {
+    return view('welcome');
+})->name('login.page');
+
+Route::post('/authenticate', [AuthController::class, 'authenticate'])->name('authenticate');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
 Route::post('/api/authenticate', [UserController::class, 'authenticateApi'])->name('autentica.usuario');
 
 Route::post('/upload-arquivo', [ValeTransporteCombustivelController::class, 'importarArquivo'])->name('importar.arquivo');
@@ -113,7 +121,7 @@ Route::get('/valetransportecombustivel/{id}', [ValeTransporteCombustivelControll
 
 Route::post('/valetransportecombustivel/updateVale', [ValeTransporteCombustivelController::class, 'updateVale'])->name('valetransportecombustivel.updateVale');
 
-Route::post('/valetransportecombustivel/update', [ValeTransporteCombustivelController::class, 'update'])->name('valetransportecombustivel.update');
+Route::put('/valetransportecombustivel/update', [ValeTransporteCombustivelController::class, 'update'])->name('valetransportecombustivel.update');
 Route::post('/valetransportecombustivel/store', [ValeTransporteCombustivelController::class, 'store'])->name('valetransportecombustivel.store');
 Route::delete('/valetransportecombustivel/{id}', [ValeTransporteCombustivelController::class, 'destroy'])->name('valetransportecombustivel.destroy');
 
