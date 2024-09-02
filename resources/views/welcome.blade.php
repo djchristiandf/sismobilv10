@@ -488,12 +488,19 @@
             <div class="modal-body">
             <form id="authForm">
                 <div class="mb-3">
-                <label for="username" class="col-form-label">Usuário:</label>
-                <input type="text" class="form-control" id="username" required>
+                    <label for="username" class="col-form-label">Usuário:</label>
+                    <input type="text" class="form-control" id="username" required>
                 </div>
                 <div class="mb-3">
-                <label for="password" class="col-form-label">Senha:</label>
-                <input type="password" class="form-control" id="password" required>
+                    <label for="password" class="col-form-label">Senha:</label>
+                    <input type="password" class="form-control" id="password" required>
+                </div>
+                <!-- Spinner -->
+                <div class="text-center d-none" id="loadingSpinner">
+                    <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p>Aguarde enquanto o login esta sendo processado...</p>
                 </div>
             </form>
             </div>
@@ -513,6 +520,7 @@
         document.getElementById('submitAuth').addEventListener('click', function() {
             var username = document.getElementById('username').value;
             var password = document.getElementById('password').value;
+            var loadingSpinner = document.getElementById('loadingSpinner');
 
             if (!username || !password) {
                 Swal.fire({
@@ -524,6 +532,9 @@
                 return;
             }
 
+            // Mostrar o spinner
+            loadingSpinner.classList.remove('d-none');
+
             fetch('/api/authenticate', {
                 method: 'POST',
                 headers: {
@@ -534,6 +545,9 @@
             })
             .then(response => response.json())
             .then(data => {
+                // Esconder o spinner
+                loadingSpinner.classList.add('d-none');
+
                 if (data.success) {
                     window.location.href = '{{ route('valetransportecombustivel.index') }}';
                 } else {
@@ -545,7 +559,11 @@
                     });
                 }
             })
-            .catch(error => console.error('Erro:', error));
+            .catch(error => {
+                // Esconder o spinner em caso de erro
+                loadingSpinner.classList.add('d-none');
+                console.error('Erro:', error);
+            });
         });
 
     </script>
